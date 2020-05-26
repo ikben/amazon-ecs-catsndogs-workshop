@@ -57,7 +57,7 @@ Resources:
       Tags:
       - Key: Name
         Value: ECSContainerInstance
-        PropagateAtLaunch: 'true'
+        PropagateAtLaunch: True
       DesiredCapacity: '1'
 
   ECSOnDemandLaunchConfig:

@@ -18,6 +18,22 @@ Parameters:
     Description: "DO NOT CHANGE. URI of the central catsndogs ECR repo. This is used in later labs"
     Default: 205094881157.dkr.ecr.us-west-2.amazonaws.com
 Resources:
+  catsndogsALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: "50"
+      Scheme: internet-facing
+      SecurityGroups:
+        - Fn::ImportValue: !Sub "${LabSetupStackName}-ALBSecurityGroup"
+      Subnets:
+        - Fn::ImportValue: !Sub "${LabSetupStackName}-PubSubnet1"
+        - Fn::ImportValue: !Sub "${LabSetupStackName}-PubSubnet2"
+      Tags:
+        - Key: Name
+          Value: catsndogsALB
+
   CatsTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -121,9 +137,7 @@ Resources:
       ComparisonOperator: LessThanOrEqualToThreshold
       Dimensions:
       - Name: LoadBalancer
-        Value:
-          Fn::ImportValue:
-            !Sub "${LabSetupStackName}-ALBFullName"
+        Value: !GetAtt catsndogsALB.LoadBalancerFullName
       - Name: TargetGroup
         Value: !GetAtt [CatsALBTargetGroup, TargetGroupFullName]
   DogsScaleDownAlarm:
@@ -139,9 +153,7 @@ Resources:
       ComparisonOperator: LessThanOrEqualToThreshold
       Dimensions:
       - Name: LoadBalancer
-        Value:
-          Fn::ImportValue:
-            !Sub "${LabSetupStackName}-ALBFullName"
+        Value: !GetAtt catsndogsALB.LoadBalancerFullName
       - Name: TargetGroup
         Value: !GetAtt [DogsALBTargetGroup, TargetGroupFullName]
   CatsScaleUpAlarm:
@@ -157,9 +169,7 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
       - Name: LoadBalancer
-        Value:
-          Fn::ImportValue:
-            !Sub "${LabSetupStackName}-ALBFullName"
+        Value: !GetAtt catsndogsALB.LoadBalancerFullName
       - Name: TargetGroup
         Value: !GetAtt [CatsALBTargetGroup, TargetGroupFullName]
   DogsScaleUpAlarm:
@@ -175,9 +185,7 @@ Resources:
       ComparisonOperator: GreaterThanOrEqualToThreshold
       Dimensions:
       - Name: LoadBalancer
-        Value:
-          Fn::ImportValue:
-            !Sub "${LabSetupStackName}-ALBFullName"
+        Value: !GetAtt catsndogsALB.LoadBalancerFullName
       - Name: TargetGroup
         Value: !GetAtt [DogsALBTargetGroup, TargetGroupFullName]
   CatsALBTargetGroup:
@@ -261,11 +269,28 @@ Resources:
   LoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
-      LoadBalancerArn:
-        Fn::ImportValue:
-          !Sub "${LabSetupStackName}-ALBARN"
+      LoadBalancerArn: !Ref catsndogsALB
       Port: 80
       Protocol: HTTP
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref SimpleHomePageALBTargetGroup
+
+Outputs:
+  LoadBalancerARN:
+    Description: ARN of the Application Load Balancer for cats and dogs
+    Value: !Ref catsndogsALB
+    Export:
+      Name: !Sub ${AWS::StackName}-ALBARN
+
+  LoadBalancerFullName:
+    Description: Application Load Balancer for cats and dogs
+    Value: !GetAtt catsndogsALB.LoadBalancerFullName
+    Export:
+      Name: !Sub ${AWS::StackName}-ALBFullName
+
+  LoadBalancerDNSName:
+    Description: Application Load Balancer for cats and dogs
+    Value: !GetAtt catsndogsALB.DNSName
+    Export:
+      Name: !Sub ${AWS::StackName}-ALBDNSName

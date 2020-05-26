@@ -554,22 +554,6 @@ Resources:
       RepositoryDescription: "Dogs application source code"
       RepositoryName: DogsRepo                
   
-  catsndogsALB:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      LoadBalancerAttributes:
-      - Key: idle_timeout.timeout_seconds
-        Value: 50
-      Scheme: internet-facing
-      SecurityGroups:
-        - !Ref ELBSecurityGroup
-      Subnets:
-        - !Ref PubSubnet1
-        - !Ref PubSubnet2
-      Tags:
-        - Key: Name
-          Value: catsndogsALB
-
   CodeUploadS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -638,24 +622,6 @@ Outputs:
     Value: !Ref EC2InstanceProfile
     Export:
       Name: !Sub ${AWS::StackName}-EC2InstanceProfile
-
-  LoadBalancerARN:
-    Description: ARN of the Application Load Balancer for cats and dogs
-    Value: !Ref catsndogsALB
-    Export:
-      Name: !Sub ${AWS::StackName}-ALBARN
-
-  LoadBalancerFullName:
-    Description: Application Load Balancer for cats and dogs
-    Value: !GetAtt catsndogsALB.LoadBalancerFullName
-    Export:
-      Name: !Sub ${AWS::StackName}-ALBFullName
-
-  LoadBalancerDNSName:
-    Description: Application Load Balancer for cats and dogs
-    Value: !GetAtt catsndogsALB.DNSName
-    Export:
-      Name: !Sub ${AWS::StackName}-ALBDNSName
 
   LoadBalancerSecurityGroup:
     Description: Application Load Balancer Security Group
